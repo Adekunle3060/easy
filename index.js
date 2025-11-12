@@ -3,6 +3,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 
 const app = express();
+app.use(express.static('public'));
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
@@ -30,13 +31,10 @@ const bookingSchema = new mongoose.Schema({
 const Booking = mongoose.model("Booking", bookingSchema);
 
 // ✅ 4. Routes
-app.get("/", (req, res) => {
-  res.send(`
-    <h2>✅ EasyFix Server Running</h2>
-    <p>Submit bookings via frontend.</p>
-    <p>View stored bookings at <a href="/bookings">/bookings</a>.</p>
-  `);
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: __dirname + '/public' });
 });
+
 
 // Receive form data and save to MongoDB
 app.post("/api/book-service", async (req, res) => {
@@ -91,4 +89,4 @@ app.get("/bookings", async (req, res) => {
 });
 
 // ✅ 5. Start server
-app.listen(5000, () => console.log("🚀 Server running on http://localhost:5000"));
+app.listen(5300, () => console.log("🚀 Server running on http://localhost:5300"));
