@@ -73,7 +73,7 @@ document.getElementById('serviceBookingForm').addEventListener('submit', async f
   };
 
   try {
-    const response = await fetch('http://localhost:5000/api/book-service', {
+    const response = await fetch('https://easyfix-backend.onrender.com/api/book-service', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bookingData)
