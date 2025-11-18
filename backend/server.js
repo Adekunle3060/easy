@@ -62,6 +62,17 @@ app.post("/api/book-service", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+// GET all bookings
+app.get("/api/book-service", async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 }); // newest first
+    res.json(bookings);
+  } catch (err) {
+    console.error("❌ Error fetching bookings:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
 
 // ======================
 // START SERVER
