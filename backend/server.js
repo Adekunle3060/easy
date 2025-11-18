@@ -50,11 +50,15 @@ app.get("/", (req, res) => res.send("🚀 Backend is running!"));
 
 app.post("/api/book-service", async (req, res) => {
   try {
+    console.log("📥 New booking received:", req.body); // <-- log the form data
+
     const booking = new Booking(req.body);
     await booking.save();
+
+    console.log("✅ Booking saved successfully"); // optional confirmation log
     res.json({ success: true });
   } catch (err) {
-    console.error("Booking Error:", err);
+    console.error("❌ Booking Error:", err);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
