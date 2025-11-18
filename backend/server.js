@@ -7,7 +7,7 @@ const app = express();
 
 // CORS setup
 app.use(cors({
-  origin: "https://easy-blush.vercel.app" // Replace with your frontend URL
+  origin: "https://easy-theta.vercel.app/" // Replace with your frontend URL
 }));
 
 // Parse JSON
