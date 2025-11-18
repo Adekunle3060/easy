@@ -5,23 +5,38 @@ import mongoose from "mongoose";
 
 const app = express();
 
+// ======================
+// CONFIGURATION
+// ======================
+
+// Replace this with your actual frontend URL deployed on Vercel
+const FRONTEND_URL = "https://easy-theta.vercel.app/"; 
+
 // CORS setup
 app.use(cors({
-  origin: "https://easy-theta.vercel.app/" // Replace with your frontend URL
+  origin: FRONTEND_URL
 }));
 
 // Parse JSON
 app.use(express.json());
 
-// MongoDB Atlas connection
-mongoose.connect(process.env.MONGO_URI, {
+// ======================
+// MONGODB CONNECTION
+// ======================
+
+// Replace with your actual MongoDB connection string and database name
+const MONGO_URI = "mongodb+srv://adekunlesunkanmi59:yTDirJyOcB25MEYq@cluster0.gfhyffu.mongodb.net/easyfixDB?retryWrites=true&w=majority";
+
+mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
 .then(() => console.log("✅ Connected to MongoDB Atlas"))
 .catch(err => console.error("❌ MongoDB Error:", err));
 
-// Mongoose Schema & Model
+// ======================
+// SCHEMA & MODEL
+// ======================
 const bookingSchema = new mongoose.Schema({
   firstName: String,
   lastName: String,
@@ -35,7 +50,11 @@ const bookingSchema = new mongoose.Schema({
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
-// Root route (for testing)
+// ======================
+// ROUTES
+// ======================
+
+// Root route
 app.get("/", (req, res) => {
   res.send("🚀 Backend is running!");
 });
@@ -47,11 +66,13 @@ app.post("/api/book-service", async (req, res) => {
     await booking.save();
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Booking Error:", err);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
 
-// Start server
+// ======================
+// START SERVER
+// ======================
 const PORT = process.env.PORT || 5300;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
