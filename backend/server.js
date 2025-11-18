@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -8,25 +7,19 @@ const app = express();
 // ======================
 // CONFIGURATION
 // ======================
+const FRONTEND_URL = "https://easy-theta.vercel.app"; // no trailing slash
 
-// Replace this with your actual frontend URL deployed on Vercel
-const FRONTEND_URL = "https://easy-theta.vercel.app/"; 
-
-// CORS setup
 app.use(cors({
-  origin: FRONTEND_URL
+  origin: FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE"]
 }));
 
-// Parse JSON
 app.use(express.json());
 
 // ======================
 // MONGODB CONNECTION
 // ======================
-
-// Replace with your actual MongoDB connection string and database name
-const MONGO_URI = "mongodb+srv://adekunlesunkanmi59:yTDirJyOcB25MEYq@cluster0.gfhyffu.mongodb.net/easyfixDB?retryWrites=true&w=majority";
-
+const MONGO_URI = process.env.MONGO_URI; // set this in Render environment
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -53,13 +46,8 @@ const Booking = mongoose.model("Booking", bookingSchema);
 // ======================
 // ROUTES
 // ======================
+app.get("/", (req, res) => res.send("🚀 Backend is running!"));
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("🚀 Backend is running!");
-});
-
-// Booking API route
 app.post("/api/book-service", async (req, res) => {
   try {
     const booking = new Booking(req.body);
@@ -74,5 +62,5 @@ app.post("/api/book-service", async (req, res) => {
 // ======================
 // START SERVER
 // ======================
-const PORT = process.env.PORT || 5300;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
