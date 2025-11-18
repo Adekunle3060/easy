@@ -60,7 +60,7 @@ document.getElementById('serviceBookingForm').addEventListener('submit', async f
     };
 
     try {
-        const response = await fetch('https://easy-59aa.onrender.com/api/book-service', {
+        const response = await fetch('https://easy-m117.onrender.com/api/book-service', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingData)
