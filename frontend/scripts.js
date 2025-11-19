@@ -1,80 +1,59 @@
 // Mobile menu toggle
 document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
-    const navLinks = document.querySelector('.nav-links');
-    if (navLinks.style.display === 'flex') {
-        navLinks.style.display = 'none';
-    } else {
-        navLinks.style.display = 'flex';
-    }
+    document.querySelector('.nav-links').classList.toggle('active');
 });
 
-// Smooth scrolling for anchor links
+// Smooth scrolling
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
         e.preventDefault();
-        const targetId = this.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            window.scrollTo({
-                top: targetElement.offsetTop - 80,
-                behavior: 'smooth'
-            });
-
-            // Close mobile menu if open
-            const navLinks = document.querySelector('.nav-links');
-            if (window.innerWidth <= 768 && navLinks.style.display === 'flex') {
-                navLinks.style.display = 'none';
-            }
-        }
+        const target = document.querySelector(this.getAttribute('href'));
+        window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
     });
 });
 
-// Set minimum date for booking to today
-const today = new Date().toISOString().split('T')[0];
-document.getElementById('date').setAttribute('min', today);
+// Min date
+document.getElementById('date').setAttribute('min', new Date().toISOString().split('T')[0]);
 
-// Button scroll to booking section
-const buttons = document.querySelectorAll('button.btn.btn-primary');
-buttons.forEach(button => {
-    button.addEventListener('click', () => {
-        const bookingSection = document.getElementById('booking');
-        if (bookingSection) {
-            bookingSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-});
+// Scroll to booking
+document.querySelectorAll('.service-card .btn-primary').forEach(btn =>
+    btn.addEventListener('click', () =>
+        document.getElementById('booking').scrollIntoView({ behavior: "smooth" })
+    )
+);
 
-// Form submission
+// Submit booking
 document.getElementById('serviceBookingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const bookingData = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        service: document.getElementById('service').value,
-        date: document.getElementById('date').value,
-        time: document.getElementById('time').value,
-        details: document.getElementById('details').value
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: email.value,
+        phone: phone.value,
+        service: service.value,
+        date: date.value,
+        time: time.value,
+        details: details.value
     };
 
     try {
-        const response = await fetch('https://easy-wgff.onrender.com/api/book-service', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("https://easy-wgff.onrender.com/api/book-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(bookingData)
         });
 
-        const result = await response.json();
+        const result = await res.json();
+
         if (result.success) {
-            alert('✅ Booking request sent successfully!');
+            alert(`✅ Booking submitted!\nYour Tracking ID: ${result.trackingId}`);
             this.reset();
         } else {
-            alert('⚠️ Something went wrong.');
+            alert("⚠️ Booking failed.");
         }
-    } catch (error) {
-        console.error('Error sending booking:', error);
-        alert('❌ Could not connect to the server.');
+    } catch (err) {
+        alert("❌ Server unreachable.");
+        console.error(err);
     }
 });
