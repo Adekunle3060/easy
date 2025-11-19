@@ -107,6 +107,10 @@ app.get("/api/track", async (req, res) => {
 // ----------------------
 
 // Admin login
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 app.post("/api/admin-login", (req, res) => {
   const { username, password } = req.body;
 
@@ -162,3 +166,16 @@ app.put("/api/update-status/:id", async (req, res) => {
 // ======================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
+// Public email-based tracking
+app.get("/api/track-email", async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ success: false, message: "Email required" });
+
+  try {
+    const bookings = await Booking.find({ email: email.toLowerCase() }).sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
+  } catch (err) {
+    console.error("❌ Track by email error:", err);
+    res.status(500).json({ success: false });
+  }
+});

@@ -27,6 +27,14 @@
     const trackForm = document.getElementById('trackForm');
     const bookingResults = document.getElementById('bookingResults');
 
+    const statusColors = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      accepted: 'bg-blue-100 text-blue-800',
+      'in-progress': 'bg-purple-100 text-purple-800',
+      completed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+
     trackForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       bookingResults.innerHTML = '';
@@ -35,31 +43,25 @@
       if (!email) return;
 
       try {
-        const response = await fetch('https://easy-wgff.onrender.com/api/book-service');
-        const bookings = await response.json();
+        // Use the new email-based tracking route
+        const response = await fetch(`https://easy-wgff.onrender.com/api/track-email?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
 
-        const userBookings = bookings.filter(b => b.email.toLowerCase() === email.toLowerCase());
-
-        if (userBookings.length === 0) {
+        if (!data.success || !data.bookings || data.bookings.length === 0) {
           bookingResults.innerHTML = `<p class="text-center text-gray-500">No bookings found for ${email}</p>`;
           return;
         }
 
-        userBookings.forEach(booking => {
-          const statusColors = {
-            Pending: 'bg-yellow-100 text-yellow-800',
-            Confirmed: 'bg-blue-100 text-blue-800',
-            Completed: 'bg-green-100 text-green-800'
-          };
-
+        data.bookings.forEach(booking => {
           bookingResults.innerHTML += `
             <div class="bg-gray-50 p-4 rounded-lg shadow flex justify-between items-center">
               <div>
                 <p class="font-semibold text-gray-700">${booking.service} on ${booking.date} at ${booking.time}</p>
                 <p class="text-gray-500">${booking.firstName} ${booking.lastName} | ${booking.phone}</p>
+                <p class="text-gray-400 text-sm">Tracking ID: ${booking.trackingId}</p>
               </div>
-              <span class="px-3 py-1 rounded-full font-semibold ${statusColors[booking.status] || 'bg-gray-200 text-gray-800'}">
-                ${booking.status}
+              <span class="px-3 py-1 rounded-full font-semibold ${statusColors[booking.status.toLowerCase()] || 'bg-gray-200 text-gray-800'}">
+                ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
               </span>
             </div>
           `;
