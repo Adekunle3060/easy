@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import path from "path";
 
 const app = express();
 
@@ -8,8 +9,8 @@ const app = express();
 // CONFIGURATION
 // ======================
 const FRONTEND_URL = [
-  "https://easy-theta.vercel.app", // deployed frontend
-      
+  "https://easy-theta.vercel.app",
+  "http://localhost:3000" // optional for local testing
 ];
 
 app.use(cors({
@@ -54,7 +55,7 @@ const bookingSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Generate Tracking ID before saving
+// Auto-generate Tracking ID
 bookingSchema.pre("save", function(next) {
   if (!this.trackingId) {
     this.trackingId = "EFX-" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -87,7 +88,7 @@ app.post("/api/book-service", async (req, res) => {
   }
 });
 
-// Track booking (public, by trackingId only)
+// Track booking (by tracking ID)
 app.get("/api/track", async (req, res) => {
   const { trackingId } = req.query;
   try {
@@ -103,19 +104,40 @@ app.get("/api/track", async (req, res) => {
 });
 
 // ----------------------
-// Admin Routes
+// 📌 New: Track booking by email (fixed & moved BEFORE app.listen)
 // ----------------------
+app.get("/api/track-email", async (req, res) => {
+  const { email } = req.query;
 
-// Admin login
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email required" });
+  }
+
+  try {
+    // Case-insensitive email match
+    const bookings = await Booking.find({
+      email: { $regex: new RegExp(`^${email}$`, "i") }
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, bookings });
+  } catch (err) {
+    console.error("❌ Track by email error:", err);
+    res.status(500).json({ success: false });
+  }
 });
 
+// ----------------------
+// Admin Routes
+// ----------------------
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'admin.html'));
+});
+
+// Admin login
 app.post("/api/admin-login", (req, res) => {
   const { username, password } = req.body;
 
   if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
-    // For simplicity, we send a basic token (in production use JWT)
     res.json({ success: true, token: "admin-secret-token" });
   } else {
     res.status(401).json({ success: false, message: "Invalid credentials" });
@@ -165,17 +187,6 @@ app.put("/api/update-status/:id", async (req, res) => {
 // START SERVER
 // ======================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
-// Public email-based tracking
-app.get("/api/track-email", async (req, res) => {
-  const { email } = req.query;
-  if (!email) return res.status(400).json({ success: false, message: "Email required" });
-
-  try {
-    const bookings = await Booking.find({ email: email.toLowerCase() }).sort({ createdAt: -1 });
-    res.json({ success: true, bookings });
-  } catch (err) {
-    console.error("❌ Track by email error:", err);
-    res.status(500).json({ success: false });
-  }
-});
+app.listen(PORT, () =>
+  console.log(`🚀 Backend running on port ${PORT}`)
+);
