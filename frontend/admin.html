@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
 
   <!-- Login Form -->
   <div id="login-container" class="p-8 max-w-md w-full bg-white rounded shadow">
@@ -30,6 +30,8 @@
           <th class="border px-3 py-2">Date</th>
           <th class="border px-3 py-2">Time</th>
           <th class="border px-3 py-2">Details</th>
+          <th class="border px-3 py-2">Status</th>
+          <th class="border px-3 py-2">Change Status</th>
         </tr>
       </thead>
       <tbody id="bookingTableBody" class="text-gray-700"></tbody>

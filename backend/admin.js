@@ -43,12 +43,6 @@ async function loadBookings() {
       headers: { Authorization: `Bearer ${adminToken}` }
     });
 
-    if (!res.ok) {
-      // handle permission / other errors gracefully
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Failed to fetch bookings");
-    }
-
     const bookings = await res.json();
 
     tbody.innerHTML = "";
@@ -56,14 +50,13 @@ async function loadBookings() {
     bookings.forEach(b => {
       tbody.innerHTML += `
         <tr>
-          <td class="border px-2 py-1">${b.firstName || ""} ${b.lastName || ""}</td>
-          <td class="border px-2 py-1">${b.email || ""}</td>
-          <td class="border px-2 py-1">${b.phone || ""}</td>
-          <td class="border px-2 py-1">${b.service || ""}</td>
-          <td class="border px-2 py-1">${b.date || ""}</td>
-          <td class="border px-2 py-1">${b.time || ""}</td>
-          <td class="border px-2 py-1">${b.details || ""}</td>
-          <td class="border px-2 py-1 capitalize">${b.status || "pending"}</td>
+          <td class="border px-2 py-1">${b.firstName} ${b.lastName}</td>
+          <td class="border px-2 py-1">${b.email}</td>
+          <td class="border px-2 py-1">${b.phone}</td>
+          <td class="border px-2 py-1">${b.service}</td>
+          <td class="border px-2 py-1">${b.date}</td>
+          <td class="border px-2 py-1">${b.time}</td>
+          <td class="border px-2 py-1">${b.details}</td>
           <td class="border px-2 py-1">
             <select onchange="updateStatus('${b._id}', this.value)">
               <option value="">Change</option>
@@ -84,11 +77,10 @@ async function loadBookings() {
 }
 
 // --- Update Booking Status ---
-// NOTE: This was the main fix: call /api/update-status/:id (backend route)
 async function updateStatus(id, status) {
   if (!status) return; // ignore if "Change" selected
   try {
-    const res = await fetch(`https://easy-wgff.onrender.com/api/update-status/${id}`, {
+    const res = await fetch(`https://easy-wgff.onrender.com/api/book-service/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -99,11 +91,10 @@ async function updateStatus(id, status) {
 
     const result = await res.json();
 
-    if (res.ok && result.success) {
+    if (result.success) {
       alert(`✅ Status updated to "${status}"`);
       await loadBookings(); // refresh table
     } else {
-      console.warn("Update failed response:", result);
       alert("⚠️ Could not update status");
     }
   } catch (err) {
