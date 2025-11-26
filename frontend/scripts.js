@@ -17,17 +17,19 @@ const menuBtn = document.querySelector('.mobile-menu-btn');
 const navLinks = document.querySelector('.nav-links');
 const overlay = document.querySelector('.menu-overlay');
 
-menuBtn.addEventListener('click', () => {
-    menuBtn.classList.toggle('active');
-    navLinks.classList.toggle('active');
-    overlay.classList.toggle('active');
-});
+if (menuBtn && navLinks && overlay) {
+    menuBtn.addEventListener('click', () => {
+        menuBtn.classList.toggle('active');
+        navLinks.classList.toggle('active');
+        overlay.classList.toggle('active');
+    });
 
-overlay.addEventListener('click', () => {
-    menuBtn.classList.remove('active');
-    navLinks.classList.remove('active');
-    overlay.classList.remove('active');
-});
+    overlay.addEventListener('click', () => {
+        menuBtn.classList.remove('active');
+        navLinks.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+}
 
 // ==========================
 // SMOOTH SCROLLING
@@ -36,27 +38,40 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
+        if (!target) return;
         window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
 
-        navLinks.classList.remove('active');
-        menuBtn.classList.remove('active');
-        overlay.classList.remove('active');
+        navLinks?.classList.remove('active');
+        menuBtn?.classList.remove('active');
+        overlay?.classList.remove('active');
     });
 });
 
 // ==========================
 // SET MIN DATE
 // ==========================
-document.getElementById('date').setAttribute('min', new Date().toISOString().split('T')[0]);
+if (date) {
+    date.setAttribute('min', new Date().toISOString().split('T')[0]);
+}
 
 // ==========================
-// SCROLL TO BOOKING
+// SCROLL TO BOOKING + PRE-SELECT SERVICE
 // ==========================
-document.querySelectorAll('.service-card .btn-primary').forEach(btn =>
-    btn.addEventListener('click', () =>
-        document.getElementById('booking').scrollIntoView({ behavior: "smooth" })
-    )
-);
+document.querySelectorAll('.service-card').forEach(card => {
+    const btn = card.querySelector('.btn-primary');
+    const serviceType = card.dataset.service; // Example: <div class="service-card" data-service="plumbing">
+
+    if (btn) {
+        btn.addEventListener('click', () => {
+            document.getElementById('booking')?.scrollIntoView({ behavior: "smooth" });
+            
+            // Auto-select service
+            if (service && serviceType) {
+                service.value = serviceType;
+            }
+        });
+    }
+});
 
 // ==========================
 // SERVICE PRICES (NGN)
@@ -73,74 +88,89 @@ const servicePrices = {
 // ==========================
 // BOOKING FORM HANDLER
 // ==========================
-document.getElementById('serviceBookingForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+const form = document.getElementById('serviceBookingForm');
+if (form) {
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-    const bookingData = {
-        firstName: firstName.value,
-        lastName: lastName.value,
-        email: email.value,
-        phone: phone.value,
-        service: service.value,
-        date: date.value,
-        time: time.value,
-        details: details.value
-    };
-
-    console.log("📨 Sending booking:", bookingData);
-
-    try {
-        const res = await fetch("https://easy-wgff.onrender.com/api/book-service", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(bookingData)
-        });
-
-        const result = await res.json();
-        console.log("📩 Backend response:", result);
-
-        if (result.success) {
-            // Launch payment
-            payWithPaystack(bookingData, result.trackingId);
-            this.reset();
-        } else {
-            alert("⚠️ Booking failed. Try again.");
+        // Basic Validation
+        if (!firstName.value || !email.value || !service.value) {
+            alert("⚠️ Please fill all required fields.");
+            return;
         }
-    } catch (err) {
-        alert("❌ Failed to connect to server.");
-        console.error(err);
-    }
-});
+
+        // Disable button while loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        const bookingData = {
+            firstName: firstName.value.trim(),
+            lastName: lastName.value.trim(),
+            email: email.value.trim(),
+            phone: phone.value.trim(),
+            service: service.value,
+            date: date.value,
+            time: time.value,
+            details: details.value.trim()
+        };
+
+        try {
+            const res = await fetch("https://easy-wgff.onrender.com/api/book-service", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(bookingData)
+            });
+
+            const result = await res.json();
+            console.log("Backend response:", result);
+
+            if (result?.success) {
+                payWithPaystack(bookingData, result.trackingId);
+                form.reset();
+            } else {
+                alert(result?.message || "⚠️ Booking failed. Try again.");
+            }
+        } catch (err) {
+            alert("❌ Failed to connect to server.");
+            console.error(err);
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    });
+}
 
 // ==========================
 // PAYSTACK PAYMENT
 // ==========================
 function payWithPaystack(bookingData, trackingId) {
+    if (!window.PaystackPop) {
+        alert("❌ Paystack SDK not loaded.");
+        return;
+    }
+
     const amount = (servicePrices[bookingData.service] || 5000) * 100;
 
-    let handler = PaystackPop.setup({
-        key: "pk_test_9c0c8023c9d5cc025e12c161c8d7a405b281aa8c", 
+    const handler = PaystackPop.setup({
+        key: "pk_test_9c0c8023c9d5cc025e12c161c8d7a405b281aa8c",
         email: bookingData.email,
-        amount: amount,
+        amount,
         currency: "NGN",
         ref: `EZ-${trackingId}-${Date.now()}`,
 
         callback: function(response) {
             alert("💳 Payment Successful!\nRef: " + response.reference);
-
-            // verify payment in backend
             fetch("https://easy-wgff.onrender.com/api/verify-payment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     reference: response.reference,
-                    trackingId: trackingId
+                    trackingId
                 })
-            });
+            }).catch(console.error);
         },
 
         onClose: function() {
-            alert("Payment cancelled.");
+            alert("❌ Payment cancelled.");
         }
     });
 

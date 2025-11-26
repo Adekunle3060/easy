@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import path from "path";
+import fetch from "node-fetch";   // Needed for verifying Paystack payment
 
 const app = express();
 
@@ -10,7 +11,7 @@ const app = express();
 // ======================
 const FRONTEND_URL = [
   "https://easy-theta.vercel.app",
-  "http://localhost:3000" // optional for local testing
+  "http://localhost:3000"
 ];
 
 app.use(cors({
@@ -20,6 +21,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve public folder (admin dashboard)
+app.use(express.static(path.join(process.cwd(), "public")));
 
 // ======================
 // MONGODB CONNECTION
@@ -45,17 +49,10 @@ const bookingSchema = new mongoose.Schema({
   date: String,
   time: String,
   details: String,
-  status: {
-    type: String,
-    default: "pending" // pending | accepted | in-progress | completed | cancelled
-  },
-  trackingId: {
-    type: String,
-    unique: true
-  }
+  status: { type: String, default: "pending" },
+  trackingId: { type: String, unique: true }
 }, { timestamps: true });
 
-// Auto-generate Tracking ID
 bookingSchema.pre("save", function(next) {
   if (!this.trackingId) {
     this.trackingId = "EFX-" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -69,14 +66,12 @@ const Booking = mongoose.model("Booking", bookingSchema);
 // ROUTES
 // ======================
 
-// Backend health check
+// Health check
 app.get("/", (req, res) => res.send("🚀 Backend is running!"));
 
 // ----------------------
-// Public Routes
+// Create Booking
 // ----------------------
-
-// Create booking (public)
 app.post("/api/book-service", async (req, res) => {
   try {
     const booking = new Booking(req.body);
@@ -88,14 +83,16 @@ app.post("/api/book-service", async (req, res) => {
   }
 });
 
-// Track booking (by tracking ID)
+// ----------------------
+// Track by Tracking ID
+// ----------------------
 app.get("/api/track", async (req, res) => {
   const { trackingId } = req.query;
+
   try {
     const booking = await Booking.findOne({ trackingId });
-    if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
-    }
+    if (!booking) return res.status(404).json({ success: false });
+
     res.json({ success: true, booking });
   } catch (err) {
     console.error("❌ Tracking Error:", err);
@@ -104,7 +101,7 @@ app.get("/api/track", async (req, res) => {
 });
 
 // ----------------------
-// 📌 New: Track booking by email (fixed & moved BEFORE app.listen)
+// Track by email
 // ----------------------
 app.get("/api/track-email", async (req, res) => {
   const { email } = req.query;
@@ -114,7 +111,6 @@ app.get("/api/track-email", async (req, res) => {
   }
 
   try {
-    // Case-insensitive email match
     const bookings = await Booking.find({
       email: { $regex: new RegExp(`^${email}$`, "i") }
     }).sort({ createdAt: -1 });
@@ -126,11 +122,52 @@ app.get("/api/track-email", async (req, res) => {
   }
 });
 
-// ----------------------
-// Admin Routes
-// ----------------------
+// ================================
+// PAYSTACK PAYMENT VERIFICATION
+// ================================
+app.post("/api/verify-payment", async (req, res) => {
+  const { reference, trackingId } = req.body;
+
+  if (!reference || !trackingId) {
+    return res.status(400).json({ success: false, message: "Missing data" });
+  }
+
+  try {
+    const url = `https://api.paystack.co/transaction/verify/${reference}`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.status && data.data.status === "success") {
+      // Update booking
+      await Booking.findOneAndUpdate(
+        { trackingId },
+        { status: "paid" }
+      );
+
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
+    }
+
+  } catch (err) {
+    console.error("❌ Payment Verification Error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ================================
+// ADMIN ROUTES
+// ================================
+
+// Serve admin dashboard
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'admin.html'));
+  res.sendFile(path.join(process.cwd(), "public", "admin.html"));
 });
 
 // Admin login
@@ -144,35 +181,35 @@ app.post("/api/admin-login", (req, res) => {
   }
 });
 
-// Get all bookings (Admin only)
-app.get("/api/book-service", async (req, res) => {
+// Fetch all bookings
+app.get("/api/admin/bookings", async (req, res) => {
   const authHeader = req.headers.authorization;
+
   if (authHeader !== "Bearer admin-secret-token") {
     return res.status(403).json({ success: false, message: "Forbidden" });
   }
 
   try {
     const bookings = await Booking.find().sort({ createdAt: -1 });
-    res.json(bookings);
+    res.json({ success: true, bookings });
   } catch (err) {
     console.error("❌ Fetch Error:", err);
     res.status(500).json({ success: false });
   }
 });
 
-// Update booking status (Admin only)
-app.put("/api/update-status/:id", async (req, res) => {
+// Update booking status
+app.put("/api/admin/update-status/:id", async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (authHeader !== "Bearer admin-secret-token") {
-    return res.status(403).json({ success: false, message: "Forbidden" });
-  }
 
-  const { status } = req.body;
+  if (authHeader !== "Bearer admin-secret-token") {
+    return res.status(403).json({ success: false });
+  }
 
   try {
     const updated = await Booking.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { status: req.body.status },
       { new: true }
     );
 
