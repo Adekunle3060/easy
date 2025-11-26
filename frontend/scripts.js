@@ -167,7 +167,7 @@ function payWithPaystack(bookingData, trackingId) {
     const amount = (servicePrices[bookingData.service] || 5000) * 100; // in Kobo
 
     let handler = PaystackPop.setup({
-        key: "sk_test_f36c9fe063ca4af73bcaf613b8c5c2276c762a22", // ← Replace with your Paystack PUBLIC KEY
+        key: "pk_test_9c0c8023c9d5cc025e12c161c8d7a405b281aa8c", // ← Replace with your Paystack PUBLIC KEY
         email: bookingData.email,
         amount: amount,
         currency: "NGN",
