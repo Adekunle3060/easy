@@ -1,98 +1,14 @@
-// // Mobile menu toggle
-// document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
-//     document.querySelector('.nav-links').classList.toggle('active');
-// });
-
-// // Smooth scrolling
-// document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-//     anchor.addEventListener('click', function(e) {
-//         e.preventDefault();
-//         const target = document.querySelector(this.getAttribute('href'));
-//         window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
-//     });
-// });
-
-// // Min date
-// document.getElementById('date').setAttribute('min', new Date().toISOString().split('T')[0]);
-
-// // Scroll to booking
-// document.querySelectorAll('.service-card .btn-primary').forEach(btn =>
-//     btn.addEventListener('click', () =>
-//         document.getElementById('booking').scrollIntoView({ behavior: "smooth" })
-//     )
-// );
-
-// // Submit booking
-// document.getElementById('serviceBookingForm').addEventListener('submit', async function(e) {
-//     e.preventDefault();
-
-//     const bookingData = {
-//         firstName: firstName.value,
-//         lastName: lastName.value,
-//         email: email.value,
-//         phone: phone.value,
-//         service: service.value,
-//         date: date.value,
-//         time: time.value,
-//         details: details.value
-//     };
-
-//     try {
-//         const res = await fetch("https://easy-wgff.onrender.com/api/book-service", {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify(bookingData)
-//         });
-
-//         const result = await res.json();
-
-//         if (result.success) {
-//             alert(`✅ Booking submitted!\nYour Tracking ID: ${result.trackingId}`);
-//             this.reset();
-//         } else {
-//             alert("⚠️ Booking failed.");
-//         }
-//     } catch (err) {
-//         alert("❌ Server unreachable.");
-//         console.error(err);
-//     }
-// });
-
-
-document.getElementById("serviceBookingForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    const data = {
-        firstName: document.getElementById("firstName").value,
-        lastName: document.getElementById("lastName").value,
-        email: document.getElementById("email").value,
-        phone: document.getElementById("phone").value,
-        service: document.getElementById("service").value,
-        date: document.getElementById("date").value,
-        time: document.getElementById("time").value,
-        details: document.getElementById("details").value
-    };
-
-    try {
-        const response = await fetch("https://easy-wgff.onrender.com/api/book-service", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            alert("Booking successful! Your tracking ID is: " + result.trackingId);
-            document.getElementById("serviceBookingForm").reset();
-        } else {
-            alert("Error submitting booking!");
-        }
-    } catch (err) {
-        alert("Network error! Check your internet or backend.");
-        console.error(err);
-    }
-});
+// ==========================
+// GET FORM INPUT ELEMENTS
+// ==========================
+const firstName = document.getElementById('firstName');
+const lastName = document.getElementById('lastName');
+const email = document.getElementById('email');
+const phone = document.getElementById('phone');
+const service = document.getElementById('service');
+const date = document.getElementById('date');
+const time = document.getElementById('time');
+const details = document.getElementById('details');
 
 // ==========================
 // MOBILE MENU TOGGLE
@@ -122,7 +38,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         const target = document.querySelector(this.getAttribute('href'));
         window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
 
-        // Close menu after clicking link (mobile)
         navLinks.classList.remove('active');
         menuBtn.classList.remove('active');
         overlay.classList.remove('active');
@@ -130,12 +45,12 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // ==========================
-// SET MIN DATE IN CALENDAR
+// SET MIN DATE
 // ==========================
 document.getElementById('date').setAttribute('min', new Date().toISOString().split('T')[0]);
 
 // ==========================
-// SCROLL TO BOOKING ON BUTTON CLICK
+// SCROLL TO BOOKING
 // ==========================
 document.querySelectorAll('.service-card .btn-primary').forEach(btn =>
     btn.addEventListener('click', () =>
@@ -172,7 +87,8 @@ document.getElementById('serviceBookingForm').addEventListener('submit', async f
         details: details.value
     };
 
-    // Send booking to backend
+    console.log("📨 Sending booking:", bookingData);
+
     try {
         const res = await fetch("https://easy-wgff.onrender.com/api/book-service", {
             method: "POST",
@@ -181,17 +97,17 @@ document.getElementById('serviceBookingForm').addEventListener('submit', async f
         });
 
         const result = await res.json();
+        console.log("📩 Backend response:", result);
 
         if (result.success) {
             // Launch payment
             payWithPaystack(bookingData, result.trackingId);
             this.reset();
         } else {
-            alert("⚠️ Booking failed.");
+            alert("⚠️ Booking failed. Try again.");
         }
-
     } catch (err) {
-        alert("❌ Server unreachable.");
+        alert("❌ Failed to connect to server.");
         console.error(err);
     }
 });
@@ -200,10 +116,10 @@ document.getElementById('serviceBookingForm').addEventListener('submit', async f
 // PAYSTACK PAYMENT
 // ==========================
 function payWithPaystack(bookingData, trackingId) {
-    const amount = (servicePrices[bookingData.service] || 5000) * 100; // in Kobo
+    const amount = (servicePrices[bookingData.service] || 5000) * 100;
 
     let handler = PaystackPop.setup({
-        key: "pk_test_9c0c8023c9d5cc025e12c161c8d7a405b281aa8c", // ← Replace with your Paystack PUBLIC KEY
+        key: "pk_test_9c0c8023c9d5cc025e12c161c8d7a405b281aa8c", 
         email: bookingData.email,
         amount: amount,
         currency: "NGN",
