@@ -58,6 +58,42 @@
 //     }
 // });
 
+
+document.getElementById("serviceBookingForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const data = {
+        firstName: document.getElementById("firstName").value,
+        lastName: document.getElementById("lastName").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        service: document.getElementById("service").value,
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        details: document.getElementById("details").value
+    };
+
+    try {
+        const response = await fetch("https://easy-wgff.onrender.com/api/book-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert("Booking successful! Your tracking ID is: " + result.trackingId);
+            document.getElementById("serviceBookingForm").reset();
+        } else {
+            alert("Error submitting booking!");
+        }
+    } catch (err) {
+        alert("Network error! Check your internet or backend.");
+        console.error(err);
+    }
+});
+
 // ==========================
 // MOBILE MENU TOGGLE
 // ==========================
