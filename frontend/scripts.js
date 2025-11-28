@@ -13,23 +13,26 @@ const details = document.getElementById('details');
 // ==========================
 // MOBILE MENU TOGGLE
 // ==========================
+// MOBILE MENU TOGGLE
 const menuBtn = document.querySelector('.mobile-menu-btn');
 const navLinks = document.querySelector('.nav-links');
-const overlay = document.querySelector('.menu-overlay');
 
-if (menuBtn && navLinks && overlay) {
+if (menuBtn && navLinks) {
     menuBtn.addEventListener('click', () => {
-        menuBtn.classList.toggle('active');
         navLinks.classList.toggle('active');
-        overlay.classList.toggle('active');
+        menuBtn.classList.toggle('active');
     });
 
-    overlay.addEventListener('click', () => {
-        menuBtn.classList.remove('active');
-        navLinks.classList.remove('active');
-        overlay.classList.remove('active');
+    // Optional: close menu when link clicked
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            menuBtn.classList.remove('active');
+        });
     });
 }
+
+
 
 // ==========================
 // SMOOTH SCROLLING
