@@ -506,7 +506,25 @@
         box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         border-radius: 10px;
         z-index: 999;
+        
     }
+
+    @media (max-width: 768px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-text {
+        padding-right: 0;
+        margin-bottom: 20px;
+    }
+
+    .hero-image img {
+        max-width: 100%;
+        width: 100%;
+    }
+}
 
     .nav-links.active {
         display: flex;
