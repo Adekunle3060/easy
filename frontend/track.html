@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Track Your Booking</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Fade-in + slide-up animation */
+    @keyframes fadeSlideIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .fade-slide-in {
+      animation: fadeSlideIn 0.5s ease forwards;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
 
@@ -37,13 +47,16 @@
 
     trackForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      bookingResults.innerHTML = '';
+      bookingResults.innerHTML = ''; // clear previous results
 
       const email = document.getElementById('email').value.trim();
       if (!email) return;
 
+      const submitButton = trackForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Tracking...';
+
       try {
-        // Use the new email-based tracking route
         const response = await fetch(`https://easy-wgff.onrender.com/api/track-email?email=${encodeURIComponent(email)}`);
         const data = await response.json();
 
@@ -52,23 +65,35 @@
           return;
         }
 
-        data.bookings.forEach(booking => {
-          bookingResults.innerHTML += `
-            <div class="bg-gray-50 p-4 rounded-lg shadow flex justify-between items-center">
-              <div>
-                <p class="font-semibold text-gray-700">${booking.service} on ${booking.date} at ${booking.time}</p>
-                <p class="text-gray-500">${booking.firstName} ${booking.lastName} | ${booking.phone}</p>
-                <p class="text-gray-400 text-sm">Tracking ID: ${booking.trackingId}</p>
-              </div>
-              <span class="px-3 py-1 rounded-full font-semibold ${statusColors[booking.status.toLowerCase()] || 'bg-gray-200 text-gray-800'}">
-                ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-              </span>
+        // Create document fragment
+        const fragment = document.createDocumentFragment();
+
+        data.bookings.forEach((booking, index) => {
+          const bookingDiv = document.createElement('div');
+          bookingDiv.className = `bg-gray-50 p-4 rounded-lg shadow flex justify-between items-center transform fade-slide-in`;
+          bookingDiv.style.animationDelay = `${index * 0.1}s`; // stagger animation
+
+          bookingDiv.innerHTML = `
+            <div>
+              <p class="font-semibold text-gray-700">${booking.service} on ${booking.date} at ${booking.time}</p>
+              <p class="text-gray-500">${booking.firstName} ${booking.lastName} | ${booking.phone}</p>
+              <p class="text-gray-400 text-sm">Tracking ID: ${booking.trackingId}</p>
             </div>
+            <span class="px-3 py-1 rounded-full font-semibold ${statusColors[booking.status.toLowerCase()] || 'bg-gray-200 text-gray-800'}">
+              ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </span>
           `;
+          fragment.appendChild(bookingDiv);
         });
+
+        bookingResults.appendChild(fragment);
+
       } catch (err) {
         console.error('Error fetching bookings:', err);
         bookingResults.innerHTML = `<p class="text-red-500 text-center">❌ Could not fetch bookings. Try again later.</p>`;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Track';
       }
     });
   </script>
